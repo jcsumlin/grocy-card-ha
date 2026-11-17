@@ -1,0 +1,25 @@
+{
+  "name": "grocy-chore-card",
+  "version": "1.0.0",
+  "description": "A Home Assistant Lovelace card for tracking Grocy chores and tasks",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "screenshot": "npm run build && node demo/screenshot.mjs"
+  },
+  "dependencies": {
+    "@mdi/js": "^7.4.47",
+    "lit": "^3.3.3"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "playwright": "^1.65.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}

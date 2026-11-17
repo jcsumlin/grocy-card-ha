@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Grocy Chore Card demo</title>
+<style>
+  /* Rough stand-ins for Home Assistant's default themes. */
+  .theme-light { --card-background-color:#fff; --primary-background-color:#f4f4f2; --primary-text-color:#212121;
+    --secondary-text-color:#727272; --primary-color:#03a9f4; --error-color:#db4437; --warning-color:#ffa600;
+    --success-color:#43a047; --divider-color:rgba(0,0,0,.12); color-scheme: light; }
+  .theme-dark { --card-background-color:#1c1c1c; --primary-background-color:#111111; --primary-text-color:#e1e1e1;
+    --secondary-text-color:#9b9b9b; --primary-color:#03a9f4; --error-color:#ef5350; --warning-color:#ffa600;
+    --success-color:#43a047; --divider-color:rgba(225,225,225,.12); color-scheme: dark; }
+  body { margin:0; font-family: Roboto, "Noto Sans", sans-serif; display:flex; flex-wrap:wrap; }
+  .pane { flex:1 1 420px; padding:28px; background:var(--primary-background-color); display:flex; flex-direction:column; gap:20px; align-items:center; }
+  .pane > * { width: 100%; max-width: 420px; }
+</style>
+<script>
+  customElements.define("ha-card", class extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: "open" }).innerHTML =
+        `<style>:host{display:block;background:var(--card-background-color);border-radius:12px;
+          border:1px solid var(--divider-color);color:var(--primary-text-color)}</style><slot></slot>`;
+    }
+  });
+</script>
+<script src="../dist/grocy-chore-card.js"></script>
+</head>
+<body>
+  <div class="pane theme-light" id="light"></div>
+  <div class="pane theme-dark" id="dark"></div>
+<script>
+  const day = (offset, h = 0, m = 0) => {
+    const d = new Date(); d.setDate(d.getDate() + offset); d.setHours(h, m, 0, 0);
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(h)}:${p(m)}:00`;
+  };
+  const alex = { id: 1, display_name: "Alex Rivera" }, sam = { id: 2, display_name: "Sam Okafor" };
+  const states = {
+    "sensor.grocy_chores": { entity_id: "sensor.grocy_chores", state: "7", attributes: { chores: [
+      { id: 1, name: "Vacuum living room", next_estimated_execution_time: day(-3), track_date_only: true, next_execution_assigned_user: alex, last_tracked_time: day(-10, 11), last_done_by: sam, description: "Under the sofa too. Empty the canister afterwards." },
+      { id: 2, name: "Clean the cat litter", next_estimated_execution_time: day(-1), track_date_only: true, next_execution_assigned_user: sam, last_tracked_time: day(-2, 8), last_done_by: sam },
+      { id: 3, name: "Water the plants", next_estimated_execution_time: day(0, 18), track_date_only: false, next_execution_assigned_user: alex, last_tracked_time: day(-3, 18), last_done_by: alex },
+      { id: 4, name: "Take out recycling", next_estimated_execution_time: day(0), track_date_only: true, last_tracked_time: day(-7, 7), last_done_by: alex },
+      { id: 5, name: "Change bed sheets", next_estimated_execution_time: day(2), track_date_only: true, next_execution_assigned_user: sam, last_tracked_time: day(-12) },
+      { id: 6, name: "Descale the kettle", next_estimated_execution_time: day(12), track_date_only: true, last_tracked_time: day(-50) },
+      { id: 7, name: "Clean the gutters", next_estimated_execution_time: null },
+    ] } },
+    "sensor.grocy_tasks": { entity_id: "sensor.grocy_tasks", state: "1", attributes: { tasks: [
+      { id: 20, name: "Buy new vacuum filters", due_date: day(1).slice(0, 10), assigned_to_user: alex, assigned_to_user_id: 1, category: { id: 1, name: "Errands" } },
+    ] } },
+  };
+  const hass = {
+    states, user: { id: "u1", name: "Alex" }, locale: { language: "en-US" },
+    callService: async (domain, service, data) => { console.log("callService", domain, service, JSON.stringify(data)); },
+  };
+  const configs = [
+    { title: "Household chores", entity: ["sensor.grocy_chores", "sensor.grocy_tasks"], show_create_task: true, user_id: 1, show_quantity: 6 },
+    { title: "Sam's list", entity: "sensor.grocy_chores", filter_user: 2, show_last_tracked: false, undo_seconds: 0 },
+  ];
+  for (const pane of ["light", "dark"]) {
+    for (const c of configs) {
+      const el = document.createElement("grocy-chore-card");
+      el.setConfig({ type: "custom:grocy-chore-card", ...c });
+      el.hass = hass;
+      document.getElementById(pane).appendChild(el);
+    }
+  }
+</script>
+</body>
+</html>
